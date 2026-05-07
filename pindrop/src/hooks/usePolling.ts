@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { type Photo, fetchPhotos } from '../lib/supabase';
+import { type Photo, fetchPhotosWithLocation } from '../lib/supabase';
 
 const POLLING_INTERVAL = 30000; // 30 seconds
 const MAX_PINS = 500;
@@ -15,7 +15,7 @@ export function usePolling() {
     async function poll() {
       try {
         setError(null);
-        const fetchedPhotos = await fetchPhotos();
+        const fetchedPhotos = await fetchPhotosWithLocation();
 
         // Enforce 500-pin limit with FIFO replacement
         // Keep only the most recently uploaded photos

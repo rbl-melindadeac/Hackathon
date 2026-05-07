@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export interface UnlocatedPhoto {
   id: string;
@@ -8,24 +8,23 @@ export interface UnlocatedPhoto {
 }
 
 const STORAGE_KEY = 'pindrop_unlocated_photos';
+const filesMapRef = new Map<string, File>();
 
 export function useUnlocatedPhotos() {
   const [photos, setPhotos] = useState<UnlocatedPhoto[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Filter out File objects (can't be serialized), keep metadata
         setPhotos(
           parsed.map((p: any) => ({
             id: p.id,
             title: p.title,
             error: p.error,
-            file: null, // Files can't be persisted
+            file: filesMapRef.get(p.id) || new File([], p.title),
           }))
         );
       }
@@ -38,7 +37,13 @@ export function useUnlocatedPhotos() {
   const addPhotos = (newPhotos: UnlocatedPhoto[]) => {
     setPhotos((prev) => {
       const updated = [...prev, ...newPhotos];
-      // Persist to localStorage (without File objects)
+
+      // Store File objects in memory map
+      newPhotos.forEach((p) => {
+        filesMapRef.set(p.id, p.file);
+      });
+
+      // Persist only metadata to localStorage
       try {
         const serializable = updated.map((p) => ({
           id: p.id,
@@ -56,7 +61,8 @@ export function useUnlocatedPhotos() {
   const removePhoto = (id: string) => {
     setPhotos((prev) => {
       const updated = prev.filter((p) => p.id !== id);
-      // Update localStorage
+      filesMapRef.delete(id);
+
       try {
         const serializable = updated.map((p) => ({
           id: p.id,
@@ -73,6 +79,7 @@ export function useUnlocatedPhotos() {
 
   const clearAll = () => {
     setPhotos([]);
+    filesMapRef.clear();
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (error) {

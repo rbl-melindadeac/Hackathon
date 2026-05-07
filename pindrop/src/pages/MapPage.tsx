@@ -97,7 +97,6 @@ export default function MapPage() {
             file: photo.file,
             lat: photo.lat,
             lng: photo.lng,
-            title: photo.title,
           });
           successCount++;
         } catch (error) {

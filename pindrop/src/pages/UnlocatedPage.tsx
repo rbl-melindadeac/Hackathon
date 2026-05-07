@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useUnlocatedPhotos } from '../hooks/useUnlocatedPhotos';
 import ManualPinPicker from '../components/ManualPinPicker';
-import { updatePhotoCoordinates } from '../lib/supabase';
+import { uploadPhoto } from '../lib/supabase';
 import '../styles/UnlocatedPage.css';
 
 export default function UnlocatedPage() {
@@ -31,8 +31,12 @@ export default function UnlocatedPage() {
     setStatus(`Pinning ${selectedPhoto.title}...`);
 
     try {
-      // Save coordinates to database (use photo ID as the database ID)
-      await updatePhotoCoordinates(selectedPhoto.id, lat, lng);
+      // Upload the photo with the manually selected coordinates
+      await uploadPhoto({
+        file: selectedPhoto.file,
+        lat,
+        lng,
+      });
 
       // Remove from unlocated photos
       removePhoto(selectedPhoto.id);
