@@ -1,4 +1,4 @@
-# Frontend (Node.js)
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -12,37 +12,17 @@ dist
 dist-ssr
 *.local
 
-# Backend (Python)
-.venv/
-env/
-venv/
-*.egg-info/
-build/
-out/
-
-# Environment variables
+# Environment variables — never commit real credentials
 .env
-.env.local
 .env.*.local
 
-# IDE & Editors
+# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
+.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Cache
-.cache/
-__pycache__/
-.pytest_cache/
