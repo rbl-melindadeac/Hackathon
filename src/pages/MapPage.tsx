@@ -3,6 +3,7 @@ import MapView from '../components/MapView';
 import DropZone from '../components/DropZone';
 import UploadButton from '../components/UploadButton';
 import LocationDisclosureModal from '../components/LocationDisclosureModal';
+import ErrorModal from '../components/ErrorModal';
 import { extractGPSFromPhotos, type PhotoWithLocation, type PhotoWithoutLocation } from '../lib/exif';
 import { useUnlocatedPhotos } from '../hooks/useUnlocatedPhotos';
 import '../styles/MapPage.css';
@@ -10,10 +11,13 @@ import '../styles/MapPage.css';
 export default function MapPage() {
   const { addPhotos: addUnlocatedPhotos } = useUnlocatedPhotos();
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [showDisclosure, setShowDisclosure] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [geotaggedPhotos, setGeotaggedPhotos] = useState<PhotoWithLocation[]>([]);
   const [unlocatedPhotos, setUnlocatedPhotos] = useState<PhotoWithoutLocation[]>([]);
+  const [error, setError] = useState<{ title: string; message: string } | null>(null);
+  const [retryFn, setRetryFn] = useState<(() => void) | null>(null);
 
   const handleFilesSelected = (files: File[]) => {
     // Show location disclosure modal before any upload
@@ -64,14 +68,12 @@ export default function MapPage() {
       console.log('GPS Extraction Results:', { geotagged, unlocated });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to extract GPS data';
-      setUploadStatus(`Error: ${message}`);
+      setError({
+        title: 'GPS Extraction Failed',
+        message,
+      });
+      setRetryFn(() => handleDisclosureConfirm);
       console.error('EXIF extraction error:', error);
-
-      // Clear status after 3 seconds
-      setTimeout(() => {
-        setUploadStatus(null);
-        setPendingFiles([]);
-      }, 3000);
     }
   };
 
@@ -81,11 +83,14 @@ export default function MapPage() {
     try {
       let successCount = 0;
       let errorCount = 0;
+      let lastError: Error | null = null;
 
       // Upload each photo sequentially
       for (let i = 0; i < photos.length; i++) {
         const photo = photos[i];
+        const progress = Math.round(((i + 1) / photos.length) * 100);
         setUploadStatus(`Uploading ${i + 1} of ${photos.length}...`);
+        setUploadProgress(progress);
 
         try {
           await uploadPhoto({
@@ -97,6 +102,7 @@ export default function MapPage() {
           successCount++;
         } catch (error) {
           errorCount++;
+          lastError = error instanceof Error ? error : new Error(String(error));
           console.error(`Failed to upload ${photo.title}:`, error);
         }
       }
@@ -106,25 +112,32 @@ export default function MapPage() {
         setUploadStatus(
           `✓ ${successCount} photo(s) uploaded! Pin${successCount > 1 ? 's' : ''} added to map. ${errorCount > 0 ? `${errorCount} photo(s) failed.` : ''}`
         );
-      } else {
-        setUploadStatus(`Failed to upload photos. Please try again.`);
+        setUploadProgress(100);
+        // Clear status after 4 seconds
+        setTimeout(() => {
+          setUploadStatus(null);
+          setUploadProgress(0);
+          setPendingFiles([]);
+          setGeotaggedPhotos([]);
+        }, 4000);
+      } else if (lastError) {
+        // All uploads failed - show error modal
+        setUploadProgress(0);
+        setError({
+          title: 'Upload Failed',
+          message: `Could not upload photos: ${lastError.message}`,
+        });
+        setRetryFn(() => handlePhotoUpload(photos));
       }
-
-      // Clear status after 4 seconds
-      setTimeout(() => {
-        setUploadStatus(null);
-        setPendingFiles([]);
-        setGeotaggedPhotos([]);
-      }, 4000);
     } catch (error) {
+      setUploadProgress(0);
       const message = error instanceof Error ? error.message : 'Upload failed';
-      setUploadStatus(`Error: ${message}`);
-
-      // Clear status after 3 seconds
-      setTimeout(() => {
-        setUploadStatus(null);
-        setPendingFiles([]);
-      }, 3000);
+      setError({
+        title: 'Upload Error',
+        message,
+      });
+      setRetryFn(() => handlePhotoUpload(photos));
+      console.error('Upload error:', error);
     }
   };
 
@@ -133,6 +146,20 @@ export default function MapPage() {
     setShowDisclosure(false);
     setPendingFiles([]);
     setUploadStatus(null);
+  };
+
+  const handleErrorDismiss = () => {
+    setError(null);
+    setRetryFn(null);
+    setUploadStatus(null);
+    setPendingFiles([]);
+  };
+
+  const handleErrorRetry = () => {
+    if (retryFn) {
+      retryFn();
+    }
+    setError(null);
   };
 
   return (
@@ -153,10 +180,25 @@ export default function MapPage() {
           onCancel={handleDisclosureCancel}
         />
 
+        {/* Error modal */}
+        <ErrorModal
+          isOpen={error !== null}
+          title={error?.title}
+          message={error?.message || ''}
+          onDismiss={handleErrorDismiss}
+          onRetry={handleErrorRetry}
+          showRetry={retryFn !== null}
+        />
+
         {/* Upload status message */}
         {uploadStatus && (
           <div className="upload-status">
             <p>{uploadStatus}</p>
+            {uploadProgress > 0 && uploadProgress < 100 && (
+              <div className="progress-bar-container">
+                <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }}></div>
+              </div>
+            )}
           </div>
         )}
       </div>
