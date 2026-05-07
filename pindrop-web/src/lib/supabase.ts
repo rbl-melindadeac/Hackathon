@@ -7,9 +7,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export interface Photo {
   id: string;
-  lat: number;
-  lng: number;
-  title: string;
+  lat: number | null;
+  lng: number | null;
+  title?: string;
   file_url?: string;
   is_manually_pinned?: boolean;
   created_at?: string;
@@ -17,9 +17,8 @@ export interface Photo {
 
 export interface UploadPhoto {
   file: File;
-  lat: number;
-  lng: number;
-  title: string;
+  lat: number | null;
+  lng: number | null;
 }
 
 const isPlaceholder = supabaseUrl.includes('placeholder') || supabaseAnonKey.includes('placeholder');
@@ -82,7 +81,6 @@ export async function uploadPhoto(photo: UploadPhoto): Promise<Photo> {
           lat: photo.lat,
           lng: photo.lng,
           is_manually_pinned: false,
-          title: photo.title,
         },
       ])
       .select()
@@ -94,7 +92,6 @@ export async function uploadPhoto(photo: UploadPhoto): Promise<Photo> {
       id: data.id,
       lat: data.lat,
       lng: data.lng,
-      title: data.title,
       file_url: data.file_url,
       is_manually_pinned: data.is_manually_pinned,
       created_at: data.created_at,
@@ -140,22 +137,18 @@ export async function updatePhotoCoordinates(
 }
 
 function mockUploadPhoto(photo: UploadPhoto): Promise<Photo> {
-  // Mock upload with slight delay to simulate network
   return new Promise((resolve) => {
     setTimeout(() => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const mockFileUrl = `https://mock.supabase.co/photos/${id}`;
-
       resolve({
         id,
         lat: photo.lat,
         lng: photo.lng,
-        title: photo.title,
-        file_url: mockFileUrl,
+        file_url: `https://mock.supabase.co/photos/${id}`,
         is_manually_pinned: false,
         created_at: new Date().toISOString(),
       });
-    }, 300); // Simulate 300ms upload time
+    }, 300);
   });
 }
 
