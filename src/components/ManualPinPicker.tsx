@@ -1,6 +1,6 @@
-import { MapContainer, TileLayer, Marker, ZoomControl, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, ZoomControl, useMap, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import '../styles/ManualPinPicker.css';
 
 // Fix for Leaflet default markers
@@ -19,9 +19,17 @@ interface ManualPinPickerProps {
 }
 
 /**
- * Center marker that shows the selected coordinate
+ * Center marker that shows the selected coordinate (draggable)
  */
-function CenterMarker({ lat, lng }: { lat: number; lng: number }) {
+function CenterMarker({
+  lat,
+  lng,
+  onDragEnd,
+}: {
+  lat: number;
+  lng: number;
+  onDragEnd: (lat: number, lng: number) => void;
+}) {
   const markerRef = useRef<L.Marker>(null);
 
   useEffect(() => {
@@ -30,7 +38,36 @@ function CenterMarker({ lat, lng }: { lat: number; lng: number }) {
     }
   }, [lat, lng]);
 
-  return <Marker ref={markerRef} position={[lat, lng]} />;
+  const handleDragEnd = () => {
+    if (markerRef.current) {
+      const { lat: newLat, lng: newLng } = markerRef.current.getLatLng();
+      onDragEnd(newLat, newLng);
+    }
+  };
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={[lat, lng]}
+      draggable={true}
+      eventHandlers={{
+        dragend: handleDragEnd,
+      }}
+      title="Drag to adjust location"
+    >
+      <Popup>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ margin: '0 0 4px 0', fontWeight: 600 }}>Selected Location</p>
+          <p style={{ margin: '0', fontSize: '12px' }}>
+            {lat.toFixed(4)}°, {lng.toFixed(4)}°
+          </p>
+          <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#666' }}>
+            Drag to reposition
+          </p>
+        </div>
+      </Popup>
+    </Marker>
+  );
 }
 
 /**
@@ -67,17 +104,22 @@ export default function ManualPinPicker({
   const defaultCenter: [number, number] = [20, 0];
   const defaultZoom = 3;
 
-  // Selected coordinate (starts at default center)
-  const selectedLat = useRef(defaultCenter[0]);
-  const selectedLng = useRef(defaultCenter[1]);
+  // Selected coordinate state
+  const [selectedLat, setSelectedLat] = useState(defaultCenter[0]);
+  const [selectedLng, setSelectedLng] = useState(defaultCenter[1]);
 
   const handleLocationSelect = (lat: number, lng: number) => {
-    selectedLat.current = lat;
-    selectedLng.current = lng;
+    setSelectedLat(lat);
+    setSelectedLng(lng);
+  };
+
+  const handleMarkerDragEnd = (lat: number, lng: number) => {
+    setSelectedLat(lat);
+    setSelectedLng(lng);
   };
 
   const handleConfirm = () => {
-    onConfirm(selectedLat.current, selectedLng.current);
+    onConfirm(selectedLat, selectedLng);
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -121,7 +163,11 @@ export default function ManualPinPicker({
             <ZoomControl position="topleft" />
 
             {/* Center marker */}
-            <CenterMarker lat={selectedLat.current} lng={selectedLng.current} />
+            <CenterMarker
+              lat={selectedLat}
+              lng={selectedLng}
+              onDragEnd={handleMarkerDragEnd}
+            />
 
             {/* Click handler */}
             <MapClickHandler onLocationSelect={handleLocationSelect} />
@@ -136,9 +182,9 @@ export default function ManualPinPicker({
         {/* Footer */}
         <div className="picker-footer">
           <div className="picker-coordinates">
-            <span className="picker-coord-label">Coordinates:</span>
+            <span className="picker-coord-label">📍 Selected:</span>
             <span className="picker-coord-value">
-              {selectedLat.current.toFixed(4)}°, {selectedLng.current.toFixed(4)}°
+              {selectedLat.toFixed(4)}°, {selectedLng.toFixed(4)}°
             </span>
           </div>
 
