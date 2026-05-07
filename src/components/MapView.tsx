@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import '../lib/leaflet-setup.css';
 
@@ -18,6 +18,8 @@ export default function MapView({ photos = [] }: MapViewProps) {
   // Default map center (Earth view)
   const defaultCenter: [number, number] = [20, 0];
   const defaultZoom = 2;
+  const minZoom = 1;
+  const maxZoom = 18;
 
   // Test data (hardcoded marker for testing)
   const testMarker = {
@@ -35,6 +37,8 @@ export default function MapView({ photos = [] }: MapViewProps) {
       <MapContainer
         center={defaultCenter}
         zoom={defaultZoom}
+        minZoom={minZoom}
+        maxZoom={maxZoom}
         style={{
           width: '100%',
           height: '100%',
@@ -42,12 +46,18 @@ export default function MapView({ photos = [] }: MapViewProps) {
           top: 0,
           left: 0,
         }}
+        zoomControl={false}
+        dragging={true}
+        scrollWheelZoom={true}
       >
         {/* OpenStreetMap tiles (free, no API key required) */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        {/* Zoom controls (top-left corner) */}
+        <ZoomControl position="topleft" />
 
         {/* Render markers for each photo */}
         {markers.map((marker) => (
