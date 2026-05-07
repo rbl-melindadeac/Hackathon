@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PhotoDetail from './PhotoDetail';
 import '../styles/PinGallery.css';
 
 export interface GalleryPhoto {
@@ -25,6 +26,7 @@ export default function PinGallery({
   onPhotoSelect,
 }: PinGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [showDetail, setShowDetail] = useState(false);
 
   if (!isOpen || !location) return null;
 
@@ -43,9 +45,16 @@ export default function PinGallery({
   };
 
   const handlePhotoClick = () => {
-    if (onPhotoSelect && selectedPhoto) {
-      onPhotoSelect(selectedPhoto);
-    }
+    // Open detail view
+    setShowDetail(true);
+  };
+
+  const handleDetailClose = () => {
+    setShowDetail(false);
+  };
+
+  const handleDetailNavigate = (index: number) => {
+    setSelectedIndex(index);
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -146,6 +155,15 @@ export default function PinGallery({
           </button>
         </div>
       </div>
+
+      {/* Photo detail view (full-size) */}
+      <PhotoDetail
+        isOpen={showDetail}
+        photo={selectedPhoto || null}
+        allPhotos={photos}
+        onClose={handleDetailClose}
+        onNavigate={handleDetailNavigate}
+      />
     </div>
   );
 }
