@@ -1,17 +1,31 @@
 import { useState } from 'react';
 import { useUnlocatedPhotos } from '../hooks/useUnlocatedPhotos';
+import ManualPinPicker from '../components/ManualPinPicker';
 import '../styles/UnlocatedPage.css';
 
 export default function UnlocatedPage() {
   const { photos, loading } = useUnlocatedPhotos();
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   const selectedPhoto = photos.find((p) => p.id === selectedPhotoId);
 
   const handlePinManually = (photoId: string) => {
-    // TODO: Story 3.3 - Open map picker modal for this photo
+    // Open map picker for this photo
     setSelectedPhotoId(photoId);
-    console.log('Pin manually clicked for photo:', photoId);
+    setShowPicker(true);
+  };
+
+  const handlePickerCancel = () => {
+    setShowPicker(false);
+  };
+
+  const handlePickerConfirm = (lat: number, lng: number) => {
+    // TODO: Story 3.4 & 3.5 - Save coordinates to database and update map
+    console.log(`Pin assigned for ${selectedPhoto?.title}:`, { lat, lng });
+    setShowPicker(false);
+    // Show confirmation
+    alert(`Location pinned at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°\n\nStory 3.5 will save this to the map.`);
   };
 
   if (loading) {
@@ -82,14 +96,15 @@ export default function UnlocatedPage() {
           ))}
         </div>
 
-        {/* Selection indicator */}
-        {selectedPhoto && (
-          <div className="selection-indicator">
-            <p>Selected: {selectedPhoto.title}</p>
-            <p className="selection-subtext">(Map picker coming in Story 3.3)</p>
-          </div>
-        )}
       </div>
+
+      {/* Manual pin picker modal */}
+      <ManualPinPicker
+        isOpen={showPicker}
+        photoTitle={selectedPhoto?.title || ''}
+        onCancel={handlePickerCancel}
+        onConfirm={handlePickerConfirm}
+      />
     </div>
   );
 }
