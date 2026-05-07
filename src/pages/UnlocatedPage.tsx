@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useUnlocatedPhotos } from '../hooks/useUnlocatedPhotos';
 import ManualPinPicker from '../components/ManualPinPicker';
+import { updatePhotoCoordinates } from '../lib/supabase';
 import '../styles/UnlocatedPage.css';
 
 export default function UnlocatedPage() {
-  const { photos, loading } = useUnlocatedPhotos();
+  const { photos, loading, removePhoto } = useUnlocatedPhotos();
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const selectedPhoto = photos.find((p) => p.id === selectedPhotoId);
 
@@ -14,18 +17,51 @@ export default function UnlocatedPage() {
     // Open map picker for this photo
     setSelectedPhotoId(photoId);
     setShowPicker(true);
+    setStatus(null);
   };
 
   const handlePickerCancel = () => {
     setShowPicker(false);
   };
 
-  const handlePickerConfirm = (lat: number, lng: number) => {
-    // TODO: Story 3.4 & 3.5 - Save coordinates to database and update map
-    console.log(`Pin assigned for ${selectedPhoto?.title}:`, { lat, lng });
-    setShowPicker(false);
-    // Show confirmation
-    alert(`Location pinned at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°\n\nStory 3.5 will save this to the map.`);
+  const handlePickerConfirm = async (lat: number, lng: number) => {
+    if (!selectedPhoto) return;
+
+    setIsSaving(true);
+    setStatus(`Pinning ${selectedPhoto.title}...`);
+
+    try {
+      // Save coordinates to database (use photo ID as the database ID)
+      await updatePhotoCoordinates(selectedPhoto.id, lat, lng);
+
+      // Remove from unlocated photos
+      removePhoto(selectedPhoto.id);
+
+      // Show success message
+      setStatus(
+        `✓ Photo pinned! Check the map to see it. (${lat.toFixed(4)}°, ${lng.toFixed(4)}°)`
+      );
+
+      // Close picker
+      setShowPicker(false);
+
+      // Clear status after 3 seconds
+      setTimeout(() => {
+        setStatus(null);
+        setSelectedPhotoId(null);
+      }, 3000);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save coordinates';
+      setStatus(`Error: ${message}`);
+      console.error('Failed to save coordinates:', error);
+
+      // Clear error after 4 seconds
+      setTimeout(() => {
+        setStatus(null);
+      }, 4000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (loading) {
@@ -65,6 +101,13 @@ export default function UnlocatedPage() {
             {photos.length} photo{photos.length > 1 ? 's' : ''} without GPS data
           </p>
         </div>
+
+        {/* Status message */}
+        {status && (
+          <div className={`status-message ${status.startsWith('✓') ? 'success' : status.startsWith('Error') ? 'error' : 'info'}`}>
+            <p>{status}</p>
+          </div>
+        )}
 
         {/* Photos grid */}
         <div className="unlocated-grid">

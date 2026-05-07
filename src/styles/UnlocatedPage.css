@@ -74,6 +74,49 @@
   padding: 40px;
 }
 
+/* Status message */
+.status-message {
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.status-message p {
+  margin: 0;
+  font-size: 15px;
+}
+
+.status-message.success {
+  background-color: #d5f4e6;
+  border-left: 4px solid #27ae60;
+  color: #27ae60;
+}
+
+.status-message.error {
+  background-color: #fadbd8;
+  border-left: 4px solid #e74c3c;
+  color: #c0392b;
+}
+
+.status-message.info {
+  background-color: #e8f8f5;
+  border-left: 4px solid #3498db;
+  color: #2c3e50;
+}
+
 /* Photos grid */
 .unlocated-grid {
   display: grid;

@@ -105,6 +105,40 @@ export async function uploadPhoto(photo: UploadPhoto): Promise<Photo> {
   }
 }
 
+export async function updatePhotoCoordinates(
+  photoId: string,
+  lat: number,
+  lng: number
+): Promise<void> {
+  if (isPlaceholder) {
+    // Mock update with slight delay
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log(
+          `Mock: Updated photo ${photoId} to ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`
+        );
+        resolve();
+      }, 300);
+    });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('photos')
+      .update({
+        lat,
+        lng,
+        is_manually_pinned: true,
+      })
+      .eq('id', photoId);
+
+    if (error) throw error;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Update failed';
+    throw new Error(`Failed to update photo coordinates: ${message}`);
+  }
+}
+
 function mockUploadPhoto(photo: UploadPhoto): Promise<Photo> {
   // Mock upload with slight delay to simulate network
   return new Promise((resolve) => {
