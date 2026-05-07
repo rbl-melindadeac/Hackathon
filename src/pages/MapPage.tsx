@@ -4,9 +4,11 @@ import DropZone from '../components/DropZone';
 import UploadButton from '../components/UploadButton';
 import LocationDisclosureModal from '../components/LocationDisclosureModal';
 import { extractGPSFromPhotos, type PhotoWithLocation, type PhotoWithoutLocation } from '../lib/exif';
+import { useUnlocatedPhotos } from '../hooks/useUnlocatedPhotos';
 import '../styles/MapPage.css';
 
 export default function MapPage() {
+  const { addPhotos: addUnlocatedPhotos } = useUnlocatedPhotos();
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [showDisclosure, setShowDisclosure] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -30,6 +32,18 @@ export default function MapPage() {
 
       setGeotaggedPhotos(geotagged);
       setUnlocatedPhotos(unlocated);
+
+      // Save unlocated photos to persistent storage
+      if (unlocated.length > 0) {
+        addUnlocatedPhotos(
+          unlocated.map((p) => ({
+            id: p.id,
+            file: p.file,
+            title: p.title,
+            error: p.error,
+          }))
+        );
+      }
 
       // If photos have GPS, proceed to upload
       if (geotagged.length > 0) {
