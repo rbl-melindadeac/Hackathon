@@ -31,30 +31,80 @@ export default function MapPage() {
       setGeotaggedPhotos(geotagged);
       setUnlocatedPhotos(unlocated);
 
-      // Show results
-      if (geotagged.length > 0 && unlocated.length > 0) {
-        setUploadStatus(
-          `✓ ${geotagged.length} photo(s) with GPS data ready to upload. ${unlocated.length} photo(s) without GPS data saved.`
-        );
-      } else if (geotagged.length > 0) {
-        setUploadStatus(`✓ ${geotagged.length} photo(s) with GPS data ready to upload.`);
+      // If photos have GPS, proceed to upload
+      if (geotagged.length > 0) {
+        setUploadStatus(`Uploading ${geotagged.length} photo(s) to the map...`);
+        await handlePhotoUpload(geotagged);
       } else if (unlocated.length > 0) {
         setUploadStatus(
           `No GPS data found in photos. ${unlocated.length} photo(s) saved to Unlocated Photos.`
         );
+
+        // Clear status after 3 seconds
+        setTimeout(() => {
+          setUploadStatus(null);
+          setPendingFiles([]);
+        }, 3000);
       }
 
       console.log('GPS Extraction Results:', { geotagged, unlocated });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to extract GPS data';
+      setUploadStatus(`Error: ${message}`);
+      console.error('EXIF extraction error:', error);
+
+      // Clear status after 3 seconds
+      setTimeout(() => {
+        setUploadStatus(null);
+        setPendingFiles([]);
+      }, 3000);
+    }
+  };
+
+  const handlePhotoUpload = async (photos: PhotoWithLocation[]) => {
+    const { uploadPhoto } = await import('../lib/supabase');
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Upload each photo sequentially
+      for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i];
+        setUploadStatus(`Uploading ${i + 1} of ${photos.length}...`);
+
+        try {
+          await uploadPhoto({
+            file: photo.file,
+            lat: photo.lat,
+            lng: photo.lng,
+            title: photo.title,
+          });
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          console.error(`Failed to upload ${photo.title}:`, error);
+        }
+      }
+
+      // Show final results
+      if (successCount > 0) {
+        setUploadStatus(
+          `✓ ${successCount} photo(s) uploaded! Pin${successCount > 1 ? 's' : ''} added to map. ${errorCount > 0 ? `${errorCount} photo(s) failed.` : ''}`
+        );
+      } else {
+        setUploadStatus(`Failed to upload photos. Please try again.`);
+      }
 
       // Clear status after 4 seconds
       setTimeout(() => {
         setUploadStatus(null);
         setPendingFiles([]);
+        setGeotaggedPhotos([]);
       }, 4000);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to extract GPS data';
+      const message = error instanceof Error ? error.message : 'Upload failed';
       setUploadStatus(`Error: ${message}`);
-      console.error('EXIF extraction error:', error);
 
       // Clear status after 3 seconds
       setTimeout(() => {
