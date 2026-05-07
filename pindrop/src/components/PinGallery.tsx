@@ -23,7 +23,7 @@ export default function PinGallery({
   photos,
   location,
   onClose,
-  onPhotoSelect,
+  onPhotoSelect: _onPhotoSelect,
 }: PinGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showDetail, setShowDetail] = useState(false);

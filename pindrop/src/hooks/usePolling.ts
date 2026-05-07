@@ -5,7 +5,7 @@ const POLLING_INTERVAL = 30000; // 30 seconds
 const MAX_PINS = 500;
 
 // Global refetch trigger - allows external code to trigger an immediate refetch
-let refetchListeners: ((fn: () => Promise<void>) => void)[] = [];
+let refetchListeners: ((fn: () => Promise<any>) => void)[] = [];
 
 export function triggerPhotosRefetch() {
   refetchListeners.forEach((listener) => {
