@@ -1,5 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
+import { usePolling } from '../hooks/usePolling';
 import '../lib/leaflet-setup.css';
 
 // Fix for Leaflet default markers (required for React-Leaflet)
@@ -14,23 +15,18 @@ interface MapViewProps {
   photos?: Array<{ id: string; lat: number; lng: number; title: string }>;
 }
 
-export default function MapView({ photos = [] }: MapViewProps) {
+export default function MapView({ photos: propPhotos }: MapViewProps) {
+  // Use polling hook to fetch photos every 30 seconds
+  const { photos: polledPhotos, loading } = usePolling();
+
   // Default map center (Earth view)
   const defaultCenter: [number, number] = [20, 0];
   const defaultZoom = 2;
   const minZoom = 1;
   const maxZoom = 18;
 
-  // Test data (hardcoded marker for testing)
-  const testMarker = {
-    id: 'test-1',
-    lat: 51.505,
-    lng: -0.09,
-    title: 'Test Photo - London',
-  };
-
-  // Combine test marker with actual photos (or just test marker if no photos)
-  const markers = photos.length > 0 ? photos : [testMarker];
+  // Use polled photos, fallback to prop photos or empty array
+  const markers = polledPhotos.length > 0 ? polledPhotos : propPhotos || [];
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
@@ -67,6 +63,25 @@ export default function MapView({ photos = [] }: MapViewProps) {
             </Popup>
           </Marker>
         ))}
+
+        {/* Loading indicator overlay */}
+        {loading && markers.length === 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              color: 'white',
+              padding: '10px 15px',
+              borderRadius: '4px',
+              zIndex: 1000,
+              fontSize: '12px',
+            }}
+          >
+            Loading photos...
+          </div>
+        )}
       </MapContainer>
     </div>
   );
