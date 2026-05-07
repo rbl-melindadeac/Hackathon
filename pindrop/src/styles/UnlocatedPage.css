@@ -74,18 +74,53 @@
   padding: 40px;
 }
 
-/* Status message */
+/* Status message - Modal style */
 .status-message {
-  padding: 16px 20px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  font-weight: 500;
-  animation: slideDown 0.3s ease-out;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
 }
 
-@keyframes slideDown {
+.status-message::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+@keyframes fadeIn {
   from {
-    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.status-message-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
     opacity: 0;
   }
   to {
@@ -94,26 +129,67 @@
   }
 }
 
+.status-message.success .status-message-header {
+  background-color: #27ae60;
+  color: white;
+  padding: 20px;
+  border-bottom: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-message.success .status-message-header::before {
+  content: '✓';
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.status-message.success .status-message-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.status-message.error .status-message-header {
+  background-color: #e74c3c;
+  color: white;
+  padding: 20px;
+}
+
+.status-message.error .status-message-header::before {
+  content: '⚠';
+  font-size: 28px;
+  margin-right: 8px;
+}
+
+.status-message.error .status-message-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.status-message-body {
+  padding: 24px;
+}
+
 .status-message p {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
+  color: #2c3e50;
+  line-height: 1.5;
 }
 
-.status-message.success {
-  background-color: #d5f4e6;
-  border-left: 4px solid #27ae60;
+.status-message.success p {
   color: #27ae60;
+  font-weight: 500;
 }
 
-.status-message.error {
-  background-color: #fadbd8;
-  border-left: 4px solid #e74c3c;
+.status-message.error p {
   color: #c0392b;
 }
 
-.status-message.info {
-  background-color: #e8f8f5;
-  border-left: 4px solid #3498db;
+.status-message.info p {
   color: #2c3e50;
 }
 

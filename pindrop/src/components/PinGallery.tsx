@@ -32,20 +32,8 @@ export default function PinGallery({
 
   const selectedPhoto = photos[selectedIndex];
 
-  const handlePrevious = () => {
-    setSelectedIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
-  };
-
-  const handleNext = () => {
-    setSelectedIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
-  };
-
   const handleThumbnailClick = (index: number) => {
     setSelectedIndex(index);
-  };
-
-  const handlePhotoClick = () => {
-    // Open detail view
     setShowDetail(true);
   };
 
@@ -77,78 +65,32 @@ export default function PinGallery({
           </button>
         </div>
 
-        {/* Main content */}
+        {/* Main content - Grid of thumbnails */}
         <div className="gallery-content">
-          {/* Large photo preview */}
-          <div className="gallery-preview">
-            {selectedPhoto?.file_url ? (
-              <img
-                src={selectedPhoto.file_url}
-                alt={selectedPhoto.title}
-                onClick={handlePhotoClick}
-                style={{ cursor: onPhotoSelect ? 'pointer' : 'default' }}
-                title={onPhotoSelect ? 'Click to view full size' : selectedPhoto.title}
-              />
-            ) : (
-              <div className="gallery-placeholder">
-                <p>No image URL available</p>
-              </div>
-            )}
-            <p className="gallery-photo-title">{selectedPhoto?.title}</p>
-          </div>
-
-          {/* Thumbnails */}
-          {photos.length > 1 && (
-            <div className="gallery-thumbnails">
-              <button
-                className="gallery-nav-btn gallery-nav-prev"
-                onClick={handlePrevious}
-                title="Previous photo"
+          <div className="gallery-grid">
+            {photos.map((photo, index) => (
+              <div
+                key={photo.id}
+                className="gallery-grid-item"
+                onClick={() => handleThumbnailClick(index)}
+                title={photo.title}
               >
-                ←
-              </button>
-
-              <div className="gallery-thumbnail-list">
-                {photos.map((photo, index) => (
-                  <div
-                    key={photo.id}
-                    className={`gallery-thumbnail ${index === selectedIndex ? 'active' : ''}`}
-                    onClick={() => handleThumbnailClick(index)}
-                    title={`${index + 1} of ${photos.length}`}
-                  >
-                    {photo.file_url ? (
-                      <img src={photo.file_url} alt={`${index + 1}`} />
-                    ) : (
-                      <div className="thumbnail-placeholder">
-                        <span>{index + 1}</span>
-                      </div>
-                    )}
+                {photo.file_url ? (
+                  <img src={photo.file_url} alt={photo.title} />
+                ) : (
+                  <div className="gallery-grid-placeholder">
+                    <span>{index + 1}</span>
                   </div>
-                ))}
+                )}
               </div>
-
-              <button
-                className="gallery-nav-btn gallery-nav-next"
-                onClick={handleNext}
-                title="Next photo"
-              >
-                →
-              </button>
-            </div>
-          )}
-
-          {/* Single photo indicator */}
-          {photos.length === 1 && (
-            <div className="gallery-single-indicator">
-              <p>1 photo from this location</p>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
         {/* Footer */}
         <div className="gallery-footer">
           <p className="gallery-count">
-            {selectedIndex + 1} of {photos.length}
+            {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
           </p>
           <button className="gallery-dismiss-btn" onClick={onClose}>
             Close

@@ -6,6 +6,7 @@ import LocationDisclosureModal from '../components/LocationDisclosureModal';
 import ErrorModal from '../components/ErrorModal';
 import { extractGPSFromPhotos, type PhotoWithLocation } from '../lib/exif';
 import { useUnlocatedPhotos } from '../hooks/useUnlocatedPhotos';
+import { triggerPhotosRefetch } from '../hooks/usePolling';
 import '../styles/MapPage.css';
 
 export default function MapPage() {
@@ -107,6 +108,10 @@ export default function MapPage() {
           `✓ ${successCount} photo(s) uploaded! Pin${successCount > 1 ? 's' : ''} added to map. ${errorCount > 0 ? `${errorCount} photo(s) failed.` : ''}`
         );
         setUploadProgress(100);
+
+        // Refetch photos to update the map immediately
+        triggerPhotosRefetch();
+
         // Clear status after 4 seconds
         setTimeout(() => {
           setUploadStatus(null);

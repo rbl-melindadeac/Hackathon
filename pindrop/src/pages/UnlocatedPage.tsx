@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUnlocatedPhotos } from '../hooks/useUnlocatedPhotos';
+import { triggerPhotosRefetch } from '../hooks/usePolling';
 import ManualPinPicker from '../components/ManualPinPicker';
 import { uploadPhoto } from '../lib/supabase';
 import '../styles/UnlocatedPage.css';
@@ -9,8 +10,21 @@ export default function UnlocatedPage() {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
 
   const selectedPhoto = photos.find((p) => p.id === selectedPhotoId);
+
+  useEffect(() => {
+    const urls: Record<string, string> = {};
+    photos.forEach((photo) => {
+      urls[photo.id] = URL.createObjectURL(photo.file);
+    });
+    setPhotoUrls(urls);
+
+    return () => {
+      Object.values(urls).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [photos]);
 
   const handlePinManually = (photoId: string) => {
     // Open map picker for this photo
@@ -38,6 +52,9 @@ export default function UnlocatedPage() {
 
       // Remove from unlocated photos
       removePhoto(selectedPhoto.id);
+
+      // Refetch photos to update the map immediately
+      triggerPhotosRefetch();
 
       // Show success message
       setStatus(
@@ -102,27 +119,27 @@ export default function UnlocatedPage() {
           </p>
         </div>
 
-        {/* Status message */}
-        {status && (
-          <div className={`status-message ${status.startsWith('✓') ? 'success' : status.startsWith('Error') ? 'error' : 'info'}`}>
-            <p>{status}</p>
-          </div>
-        )}
-
         {/* Photos grid */}
         <div className="unlocated-grid">
           {photos.map((photo) => (
             <div key={photo.id} className="unlocated-card">
-              {/* Photo thumbnail placeholder */}
+              {/* Photo thumbnail */}
               <div className="photo-thumbnail">
-                <div className="thumbnail-placeholder">
-                  <p>📷</p>
-                </div>
+                {photoUrls[photo.id] ? (
+                  <img
+                    src={photoUrls[photo.id]}
+                    alt={photo.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div className="thumbnail-placeholder">
+                    <p>📷</p>
+                  </div>
+                )}
               </div>
 
               {/* Photo info */}
               <div className="photo-info">
-                <h3 className="photo-title">{photo.title}</h3>
                 <p className="photo-explanation">
                   This photo doesn't have GPS data — likely shared via a messaging app which
                   removes location info.
@@ -140,6 +157,22 @@ export default function UnlocatedPage() {
         </div>
 
       </div>
+
+      {/* Status message (modal) */}
+      {status && (
+        <div className={`status-message ${status.startsWith('✓') ? 'success' : status.startsWith('Error') ? 'error' : 'info'}`}>
+          <div className="status-message-content">
+            <div className="status-message-header">
+              <h2>
+                {status.startsWith('✓') ? 'Success' : status.startsWith('Error') ? 'Error' : 'Info'}
+              </h2>
+            </div>
+            <div className="status-message-body">
+              <p>{status.replace(/^[✓Error:]*\s*/, '')}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Manual pin picker modal */}
       <ManualPinPicker
