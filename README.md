@@ -1,26 +1,44 @@
-# Hackathon Project
+# PinDrop — Hackathon Project
 
-Welcome to the Hackathon project! 
-
-This repository contains collaborative work for the hackathon team.
-
-## Getting Started
-
-1. Clone this repository
-2. Install dependencies (if applicable)
-3. Check the project structure and README sections for setup instructions
+A collaborative photo-sharing application with geolocation features.
 
 ## Project Structure
 
-Add your project structure and main components here.
+```
+Hackathon/
+├── pindrop-web/        ← Frontend (React 19 + TypeScript + Vite)
+├── pindrop/            ← Backend (Dev 2)
+├── _bmad-output/       ← Planning artifacts
+└── README.md           ← Project root README
+```
 
-## Contributing
+## Frontend Setup (pindrop-web)
 
-This is a private repository for team collaboration.
+```bash
+cd pindrop-web
+npm install
+npm run dev
+```
+
+Visit http://localhost:5174 to start the app.
+
+**Stack**: React 19, TypeScript, Vite, React Router v6, React-Leaflet v5, Supabase JS
+
+**Features**:
+- Interactive map with real-time pin polling (30s)
+- Drag-and-drop photo upload with EXIF/GPS extraction
+- Photo gallery with detail view
+- Manual coordinate assignment for unlocated photos
+- Error handling with retry, file validation, upload progress tracking
+
+## Backend
+
+See `pindrop/` folder for backend setup and documentation.
 
 ## Team
 
-Add team members and their roles here.
+- Dev 1: Frontend
+- Dev 2: Backend
 
 ## License
 
