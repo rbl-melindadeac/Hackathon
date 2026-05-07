@@ -10,7 +10,7 @@ export function usePolling() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let pollInterval: number | null = null;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
 
     async function poll() {
       try {

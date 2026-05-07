@@ -13,19 +13,19 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-interface MapViewProps {
-  photos?: Array<{ id: string; lat: number; lng: number; title: string }>;
+interface MarkerData {
+  id: string;
+  lat: number;
+  lng: number;
+  title: string;
+  file_url?: string;
 }
 
-/**
- * Component that handles bounds fitting when photos change
- * Must be inside MapContainer to access useMap hook
- */
-function BoundsFitter({
-  markers,
-}: {
-  markers: Array<{ id: string; lat: number; lng: number; title: string }>;
-}) {
+interface MapViewProps {
+  photos?: MarkerData[];
+}
+
+function BoundsFitter({ markers }: { markers: MarkerData[] }) {
   const map = useMap();
   const previousMarkersRef = useRef<number>(0);
 
@@ -62,8 +62,12 @@ export default function MapView({ photos: propPhotos }: MapViewProps) {
   const minZoom = 1;
   const maxZoom = 18;
 
-  // Use polled photos, fallback to prop photos or empty array
-  const markers = polledPhotos.length > 0 ? polledPhotos : propPhotos || [];
+  // Use polled photos (filter to non-null coords), fallback to prop photos
+  const markers: MarkerData[] = polledPhotos.length > 0
+    ? polledPhotos
+        .filter((p): p is typeof p & { lat: number; lng: number } => p.lat !== null && p.lng !== null)
+        .map((p) => ({ id: p.id, lat: p.lat, lng: p.lng, title: '', file_url: p.file_url }))
+    : propPhotos || [];
   const pinCount = markers.length;
 
   const handleMarkerClick = (lat: number, lng: number) => {
@@ -81,7 +85,7 @@ export default function MapView({ photos: propPhotos }: MapViewProps) {
           title: photo.title,
           lat: photo.lat,
           lng: photo.lng,
-          file_url: (photo as any).file_url,
+          file_url: photo.file_url,
         }))
       );
     }

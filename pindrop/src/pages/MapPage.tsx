@@ -4,7 +4,7 @@ import DropZone from '../components/DropZone';
 import UploadButton from '../components/UploadButton';
 import LocationDisclosureModal from '../components/LocationDisclosureModal';
 import ErrorModal from '../components/ErrorModal';
-import { extractGPSFromPhotos, type PhotoWithLocation, type PhotoWithoutLocation } from '../lib/exif';
+import { extractGPSFromPhotos, type PhotoWithLocation } from '../lib/exif';
 import { useUnlocatedPhotos } from '../hooks/useUnlocatedPhotos';
 import '../styles/MapPage.css';
 
@@ -14,8 +14,6 @@ export default function MapPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showDisclosure, setShowDisclosure] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [geotaggedPhotos, setGeotaggedPhotos] = useState<PhotoWithLocation[]>([]);
-  const [unlocatedPhotos, setUnlocatedPhotos] = useState<PhotoWithoutLocation[]>([]);
   const [error, setError] = useState<{ title: string; message: string } | null>(null);
   const [retryFn, setRetryFn] = useState<(() => void) | null>(null);
 
@@ -33,9 +31,6 @@ export default function MapPage() {
     try {
       // Extract GPS from all files
       const { geotagged, unlocated } = await extractGPSFromPhotos(pendingFiles);
-
-      setGeotaggedPhotos(geotagged);
-      setUnlocatedPhotos(unlocated);
 
       // Save unlocated photos to persistent storage
       if (unlocated.length > 0) {
@@ -117,7 +112,6 @@ export default function MapPage() {
           setUploadStatus(null);
           setUploadProgress(0);
           setPendingFiles([]);
-          setGeotaggedPhotos([]);
         }, 4000);
       } else if (lastError) {
         // All uploads failed - show error modal

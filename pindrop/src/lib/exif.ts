@@ -40,7 +40,7 @@ export async function extractGPSFromPhotos(
 
   results.forEach((result) => {
     if (result.type === 'geotagged' && result.location) {
-      geotagged.push(result.location);
+      geotagged.push(result.location as PhotoWithLocation);
     } else {
       unlocated.push(result.location as PhotoWithoutLocation);
     }
@@ -92,10 +92,7 @@ async function extractPhotoGPS(
         },
       };
     }
-  } catch (error) {
-    // Extraction failed - treat as unlocated
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unable to read GPS data';
+  } catch {
     return {
       type: 'unlocated',
       location: {

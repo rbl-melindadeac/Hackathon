@@ -9,7 +9,6 @@ export default function UnlocatedPage() {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
   const selectedPhoto = photos.find((p) => p.id === selectedPhotoId);
 
@@ -27,7 +26,6 @@ export default function UnlocatedPage() {
   const handlePickerConfirm = async (lat: number, lng: number) => {
     if (!selectedPhoto) return;
 
-    setIsSaving(true);
     setStatus(`Pinning ${selectedPhoto.title}...`);
 
     try {
@@ -63,8 +61,6 @@ export default function UnlocatedPage() {
       setTimeout(() => {
         setStatus(null);
       }, 4000);
-    } finally {
-      setIsSaving(false);
     }
   };
 
