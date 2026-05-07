@@ -15,6 +15,8 @@ const ALLOWED_IMAGE_TYPES = [
   'image/webp',
 ];
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
 export default function DropZone({ onFilesSelected, children }: DropZoneProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [dragError, setDragError] = useState<string | null>(null);
@@ -50,20 +52,35 @@ export default function DropZone({ onFilesSelected, children }: DropZoneProps) {
 
     // Validate files
     const validImages: File[] = [];
-    let hasInvalidFiles = false;
+    let hasInvalidType = false;
+    let hasOversizeFile = false;
+    let oversizeFileName = '';
 
     for (const file of droppedFiles) {
-      if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        validImages.push(file);
-      } else {
-        hasInvalidFiles = true;
+      // Check file type
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        hasInvalidType = true;
+        continue;
       }
+
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        hasOversizeFile = true;
+        oversizeFileName = file.name;
+        continue;
+      }
+
+      validImages.push(file);
     }
 
-    // Show error if any invalid files were dropped
-    if (hasInvalidFiles) {
+    // Show appropriate error
+    if (hasOversizeFile) {
+      setDragError(
+        `File "${oversizeFileName}" is too large (max 10MB). Please choose a smaller photo.`
+      );
+      setTimeout(() => setDragError(null), 4000);
+    } else if (hasInvalidType) {
       setDragError('Only image files are accepted (JPG, PNG, HEIC, WebP)');
-      // Clear error after 3 seconds
       setTimeout(() => setDragError(null), 3000);
     }
 

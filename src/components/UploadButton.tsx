@@ -14,6 +14,8 @@ const ALLOWED_IMAGE_TYPES = [
   'image/webp',
 ];
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
 export default function UploadButton({ onFilesSelected }: UploadButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,10 +26,41 @@ export default function UploadButton({ onFilesSelected }: UploadButtonProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
 
-    // Filter to valid image types
-    const validImages = selectedFiles.filter((file) =>
-      ALLOWED_IMAGE_TYPES.includes(file.type)
-    );
+    // Validate files
+    const validImages: File[] = [];
+    let hasInvalidType = false;
+    let hasOversizeFile = false;
+    let oversizeFileName = '';
+
+    for (const file of selectedFiles) {
+      // Check file type
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        hasInvalidType = true;
+        continue;
+      }
+
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        hasOversizeFile = true;
+        oversizeFileName = file.name;
+        continue;
+      }
+
+      validImages.push(file);
+    }
+
+    // Show errors via console or could be passed to parent if needed
+    if (hasOversizeFile) {
+      console.warn(
+        `File "${oversizeFileName}" is too large (max 10MB). Please choose a smaller photo.`
+      );
+      alert(
+        `File "${oversizeFileName}" is too large (max 10MB). Please choose a smaller photo.`
+      );
+    } else if (hasInvalidType) {
+      console.warn('Only image files are accepted (JPG, PNG, HEIC, WebP)');
+      alert('Only image files are accepted (JPG, PNG, HEIC, WebP)');
+    }
 
     if (validImages.length > 0) {
       onFilesSelected(validImages);
