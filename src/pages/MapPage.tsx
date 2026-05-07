@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import MapView from '../components/MapView';
 import DropZone from '../components/DropZone';
+import UploadButton from '../components/UploadButton';
 import '../styles/MapPage.css';
 
 export default function MapPage() {
@@ -22,6 +23,9 @@ export default function MapPage() {
         <DropZone onFilesSelected={handleFilesSelected}>
           <MapView />
         </DropZone>
+
+        {/* Upload button (always visible) */}
+        <UploadButton onFilesSelected={handleFilesSelected} />
 
         {/* Upload status message */}
         {uploadStatus && (
