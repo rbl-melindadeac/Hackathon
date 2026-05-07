@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { usePolling } from '../hooks/usePolling';
+import PinGallery, { type GalleryPhoto } from './PinGallery';
 import '../lib/leaflet-setup.css';
 
 // Fix for Leaflet default markers (required for React-Leaflet)
@@ -48,6 +49,13 @@ export default function MapView({ photos: propPhotos }: MapViewProps) {
   // Use polling hook to fetch photos every 30 seconds
   const { photos: polledPhotos, loading } = usePolling();
 
+  // Gallery state
+  const [selectedLocation, setSelectedLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
+
   // Default map center (Earth view)
   const defaultCenter: [number, number] = [20, 0];
   const defaultZoom = 2;
@@ -57,6 +65,32 @@ export default function MapView({ photos: propPhotos }: MapViewProps) {
   // Use polled photos, fallback to prop photos or empty array
   const markers = polledPhotos.length > 0 ? polledPhotos : propPhotos || [];
   const pinCount = markers.length;
+
+  const handleMarkerClick = (lat: number, lng: number) => {
+    // Find all photos at this exact location (same lat/lng)
+    const photosAtLocation = markers.filter(
+      (photo) =>
+        Math.abs(photo.lat - lat) < 0.00001 && Math.abs(photo.lng - lng) < 0.00001
+    );
+
+    if (photosAtLocation.length > 0) {
+      setSelectedLocation({ lat, lng });
+      setGalleryPhotos(
+        photosAtLocation.map((photo) => ({
+          id: photo.id,
+          title: photo.title,
+          lat: photo.lat,
+          lng: photo.lng,
+          file_url: (photo as any).file_url,
+        }))
+      );
+    }
+  };
+
+  const handleGalleryClose = () => {
+    setSelectedLocation(null);
+    setGalleryPhotos([]);
+  };
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
@@ -94,6 +128,9 @@ export default function MapView({ photos: propPhotos }: MapViewProps) {
             key={marker.id}
             position={[marker.lat, marker.lng]}
             title={marker.title}
+            eventHandlers={{
+              click: () => handleMarkerClick(marker.lat, marker.lng),
+            }}
           >
             <Popup maxWidth={300}>
               <div style={{ textAlign: 'center' }}>
@@ -102,6 +139,9 @@ export default function MapView({ photos: propPhotos }: MapViewProps) {
                 </p>
                 <p style={{ margin: '0', fontSize: '12px', color: '#666' }}>
                   {marker.lat.toFixed(4)}°, {marker.lng.toFixed(4)}°
+                </p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#27ae60' }}>
+                  Click to view gallery →
                 </p>
               </div>
             </Popup>
@@ -147,6 +187,14 @@ export default function MapView({ photos: propPhotos }: MapViewProps) {
           </div>
         )}
       </MapContainer>
+
+      {/* Photo gallery modal */}
+      <PinGallery
+        isOpen={selectedLocation !== null}
+        photos={galleryPhotos}
+        location={selectedLocation}
+        onClose={handleGalleryClose}
+      />
     </div>
   );
 }
